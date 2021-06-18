@@ -6,7 +6,8 @@
 <div class="row">
     <div class="col-sm-8">
         <div class="embed-responsive embed-responsive-16by9">
-            <video class="embed-responsive-item" controls poster="<?php use yii\helpers\Url;
+            <video class="embed-responsive-item" controls poster="<?php use yii\helpers\Html;
+            use yii\helpers\Url;
 
             echo $model->getThumbnailLink() ?>" src="<?php echo $model->getVideoLink() ?> " ></video>
         </div>
@@ -30,6 +31,8 @@
     </div>
 </div>
 <div class="mt-3">
-    <p><?php echo $model->createdBy->username ?></p>
-    <?php echo \yii\helpers\Html::encode($model->description )?>
+    <p><?php echo Html::a($model->createdBy->username,[
+        'channel/view','username' => $model->createdBy->username
+        ]) ?></p>
+    <?php echo Html::encode($model->description )?>
 </div>
