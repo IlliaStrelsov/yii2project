@@ -6,6 +6,9 @@ namespace frontend\controllers;
 
 use common\models\Subscriber;
 use common\models\User;
+use frontend\modelviews\ChannelModelView;
+use frontend\repositories\UserRepository;
+use frontend\services\ChannelService;
 use yii\filters\AccessControl;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
@@ -31,43 +34,51 @@ class ChannelController extends Controller
 
 
     public function actionView($username){
-        $channel = $this->findChannel($username);
+        $userRepository = new UserRepository();
+        $channel = $userRepository->findChannel($username);
+        if(!$channel){
+            throw new NotFoundHttpException();
+        }
 
+        $viewModel = new ChannelModelView($channel);
         return $this->render('view',[
-            'channel'=> $channel
+            'viewModel'=> $viewModel
         ]);
     }
 
 
     public function actionSubscribe($username){
 
-        $channel = $this->findChannel($username);
+        $userRepository = new UserRepository();
+        $channel = $userRepository->findChannel($username);
+        if(!$channel){
+            throw new NotFoundHttpException();
+        }
+
 
         $userId = \Yii::$app->user->id;
         $subscriber = $channel->isSubscribed($userId);
 
 
         if(!$subscriber) {
-            $subscriber = new Subscriber();
-            $subscriber->channel_id = $channel->id;
-            $subscriber->user_id = $userId;
-            $subscriber->created_at = time();
-            $subscriber->save();
+            $subscribe = new ChannelService();
+            $subscribe->subscribe($username,$subscribe,$channel, $userId);
+
+            \Yii::$app->mailer->compose([
+                'html' => 'subscriber-html', 'text'=> 'subscriber-text'
+            ],[
+                'channel' => $channel,
+                'user' => \Yii::$app->user->identity
+            ])->setFrom(\Yii::$app->params['senderEmail'])
+            ->setTo($channel->email)->setSubject('You have new subscriber')->send();
         }else {
             $subscriber->delete();
         }
 
+        $viewModel = new ChannelModelView($channel);
         return $this->renderAjax('_subscribe',[
-            'channel' => $channel
+            'viewModel' => $viewModel
         ]);
     }
 
-    public function findChannel($username){
-        $channel = User::findByUsername($username);
-        if(!$channel){
-            throw new NotFoundHttpException("No such channel");
-        }
-
-        return $channel;
-    }
 }

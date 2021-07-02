@@ -12,6 +12,7 @@
       "ext-mysqli": "*",
       "ext-json": "*",
       "ext-curl": "*",
-      "ext-pdo": "*"
+      "ext-pdo": "*",
+      "ext-simplexml": "*"
     }
 }

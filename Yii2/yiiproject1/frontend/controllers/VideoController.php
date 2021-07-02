@@ -3,10 +3,13 @@
 
 namespace frontend\controllers;
 
-
+use frontend\modelviews\VideoModelView;
+use frontend\services\VideoService;
+use frontend\repositories\VideoRepository;
 use common\models\Video;
 use common\models\VideoLike;
 use common\models\VideoView;
+use yii\base\BaseObject;
 use yii\data\ActiveDataProvider;
 use yii\debug\models\timeline\DataProvider;
 use yii\filters\AccessControl;
@@ -22,7 +25,7 @@ class VideoController extends Controller
         return [
             'access'=> [
                 'class' => AccessControl::class,
-                'only' => ['like','dislike'],
+                'only' => ['like','dislike','history'],
                 'rules' => [
                     [
                         'allow' => true,
@@ -44,8 +47,10 @@ class VideoController extends Controller
 
     public function actionIndex(){
 
+
+        $videoService = new VideoService();
         $dataProvider = new ActiveDataProvider([
-            'query' => Video::find()->published()->last()
+            'query' => $videoService->videoSearchGet()
         ]);
 
         return $this->render('index',[
@@ -55,67 +60,63 @@ class VideoController extends Controller
 
     public function actionView($id){
         $this->layout = 'auth';
-        $video = $this->findVideo($id);
+        $videoRepository = new VideoRepository();
+        $video = $videoRepository->findVideo($id);
+        if(!$video){
+            throw new NotFoundHttpException("Video does not exist");
+        }
 
-        $videoView = new VideoView();
-        $videoView->video_id = $id;
-        $videoView->user_id = \Yii::$app->user->id;
-        $videoView->created_at = time();
-        $videoView->save();
+        $videoService = new VideoService();
+        $videoService->videoViewSave($id);
+        $similarVideos = $videoService->videoSimilarGet($id,$video);
 
+        $viewModel = new VideoModelView($video);
         return $this->render('view',[
-            'model' => $video
+            'viewModel' => $viewModel,
+            'similarVideos' => $similarVideos
         ]);
     }
 
     public function actionLike($id){
 
-        $video = $this->findVideo($id);
+        $videoRepository = new VideoRepository();
+        $video = $videoRepository->findVideo($id);
+        if(!$video){
+            throw new NotFoundHttpException("Video does not exist");
+        }
         $userId = \Yii::$app->user->id;
 
-        $videoLikeDislike = VideoLike::find()->userIdVideoId($userId,$id)->one();
+        $videoService = new VideoService();
+        $videoService->likeDislikeSave($id,$userId,VideoLike::TYPE_LIKE);
 
-        if(!$videoLikeDislike) {
-            $this->saveLikeDislike($id,$userId,VideoLike::TYPE_LIKE);
-        }else if($videoLikeDislike->type == VideoLike::TYPE_LIKE){
-            $videoLikeDislike->delete();
-        }else{
-            $videoLikeDislike->delete();
-            $this->saveLikeDislike($id,$userId,VideoLike::TYPE_LIKE);
-        }
-
-
+        $viewModel  = new VideoModelView($video);
         return $this->renderAjax('_buttons',[
-            'model' => $video
+            'viewModel' => $viewModel
         ]);
     }
 
 
     public function actionDislike($id){
 
-        $video = $this->findVideo($id);
+        $videoRepository = new VideoRepository();
+        $video = $videoRepository->findVideo($id);
+        if(!$video){
+            throw new NotFoundHttpException("Video does not exist");
+        }
         $userId = \Yii::$app->user->id;
 
-        $videoLikeDislike = VideoLike::find()->userIdVideoId($userId,$id)->one();
+        $videoService = new VideoService();
+        $videoService->likeDislikeSave($id,$userId,VideoLike::TYPE_DISLIKE);
 
-        if(!$videoLikeDislike) {
-            $this->saveLikeDislike($id,$userId,VideoLike::TYPE_DISLIKE);
-        }else if($videoLikeDislike->type == VideoLike::TYPE_DISLIKE){
-            $videoLikeDislike->delete();
-        }else{
-            $videoLikeDislike->delete();
-            $this->saveLikeDislike($id,$userId,VideoLike::TYPE_DISLIKE);
-        }
-
-
+        $viewModel  = new VideoModelView($video);
         return $this->renderAjax('_buttons',[
-            'model' => $video
+            'viewModel' => $viewModel
         ]);
     }
 
     public function actionSearch($keyword){
-
-        $query = Video::find()->published()->last();
+        $videoService = new VideoService();
+        $query = $videoService->videoSearchGet();
 
         if($keyword){
             $query->byKeyword($keyword);
@@ -131,15 +132,24 @@ class VideoController extends Controller
         ]);
     }
 
-    protected function findVideo($id){
+    public function actionHistory(){
 
-        $video = Video::findOne($id);
-        if(!$video){
-            throw new NotFoundHttpException("Video does not exist");
-        }
+        $videoService = new VideoService();
+        $query = $videoService->videoHistoryGet();
 
-        return $video;
+
+        $dataProvider = new ActiveDataProvider([
+            'query' => $query
+        ]);
+
+
+        return $this->render('history',[
+            'dataProvider' => $dataProvider
+        ]);
+
+
     }
+
 
     protected function saveLikeDislike($videoId,$userId,$type){
 
