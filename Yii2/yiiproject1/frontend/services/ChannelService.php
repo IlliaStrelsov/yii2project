@@ -3,19 +3,31 @@
 namespace frontend\services;
 
 use common\models\Subscriber;
+use yii\db\Exception;
 
-class ChannelService
+/**
+ * Class ChannelService
+ * @package frontend\services
+ */
+final class ChannelService
 {
 
-
-    public function subscribe($username, $subscriber, $channel, $userId)
+    /**
+     * @param $username
+     * @param $subscriber
+     * @param $channel
+     * @param $userId
+     */
+    public function subscribe(string $username, $subscriber,object $channel, int $userId)
     {
 
         $subscriber = new Subscriber();
         $subscriber->channel_id = $channel->id;
         $subscriber->user_id = $userId;
         $subscriber->created_at = time();
-        $subscriber->save();
+        if(!$subscriber->save()){
+            throw new Exception("Can`t save");
+        }
 
     }
 

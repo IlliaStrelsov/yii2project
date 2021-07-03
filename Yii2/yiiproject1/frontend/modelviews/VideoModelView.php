@@ -5,6 +5,7 @@ namespace frontend\modelviews;
 
 
 use common\models\Video;
+use common\models\VideoLike;
 use Yii;
 use yii\helpers\Url;
 
@@ -12,7 +13,7 @@ use yii\helpers\Url;
  * Class VideoModelView
  * @package frontend\modelviews
  */
-class VideoModelView
+final class VideoModelView
 {
     /**
      * @var Video
@@ -41,7 +42,7 @@ class VideoModelView
      * @param $model
      * @return string
      */
-    public function urlTo($path,$model)
+    public function urlTo(string $path,Video $model)
     {
         return Url::to([$path,'id'=>$model->video_id]);
     }
@@ -49,21 +50,23 @@ class VideoModelView
     /**
      * @return array|\common\models\VideoLike|null
      */
-    public function isLiked(){
-        return $this->video->isLikedBy(Yii::$app->user->id);
+    public function isLiked($user)
+    {
+        return $this->video->isLikedBy($user);
     }
 
     /**
      * @return array|\common\models\VideoLike|null
      */
-    public function isDisliked(){
-        return $this->video->isDislikedBy(Yii::$app->user->id);
+    public function isDisliked($user)
+    {
+        return $this->video->isDislikedBy($user);
     }
 
     /**
      * @return mixed
      */
-    public function getLikesCount()
+    public function getLikesCount():int
     {
         return $this->video->getLikes()->count();
     }
@@ -71,7 +74,7 @@ class VideoModelView
     /**
      * @return mixed
      */
-    public function getDislikesCount()
+    public function getDislikesCount():int
     {
         return $this->video->getDislikes()->count();
     }

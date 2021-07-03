@@ -9,14 +9,22 @@ use common\models\User;
 use frontend\modelviews\ChannelModelView;
 use frontend\repositories\UserRepository;
 use frontend\services\ChannelService;
+use frontend\services\MailService;
 use yii\filters\AccessControl;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 
+/**
+ * Class ChannelController
+ * @package frontend\controllers
+ */
 class ChannelController extends Controller
 {
 
-    public function behaviors()
+    /**
+     * @return array[]
+     */
+    public function behaviors():array
     {
         return [
             'access'=> [
@@ -32,11 +40,17 @@ class ChannelController extends Controller
         ];
     }
 
-
-    public function actionView($username){
+    /**
+     * @param $username
+     * @return string
+     * @throws NotFoundHttpException
+     */
+    public function actionView(string $username):string
+    {
         $userRepository = new UserRepository();
-        $channel = $userRepository->findChannel($username);
+        $channel = $userRepository->findChannelByUsername($username);
         if(!$channel){
+
             throw new NotFoundHttpException();
         }
 
@@ -47,11 +61,20 @@ class ChannelController extends Controller
     }
 
 
-    public function actionSubscribe($username){
+    /**
+     * @param $username
+     * @return string
+     * @throws NotFoundHttpException
+     * @throws \Throwable
+     * @throws \yii\db\StaleObjectException
+     */
+    public function actionSubscribe(string $username):string
+    {
 
         $userRepository = new UserRepository();
-        $channel = $userRepository->findChannel($username);
+        $channel = $userRepository->findChannelByUsername($username);
         if(!$channel){
+
             throw new NotFoundHttpException();
         }
 
@@ -61,17 +84,15 @@ class ChannelController extends Controller
 
 
         if(!$subscriber) {
+
             $subscribe = new ChannelService();
             $subscribe->subscribe($username,$subscribe,$channel, $userId);
 
-            \Yii::$app->mailer->compose([
-                'html' => 'subscriber-html', 'text'=> 'subscriber-text'
-            ],[
-                'channel' => $channel,
-                'user' => \Yii::$app->user->identity
-            ])->setFrom(\Yii::$app->params['senderEmail'])
-            ->setTo($channel->email)->setSubject('You have new subscriber')->send();
+            $mailServer = new MailService();
+            $mailServer->mailSend($channel,\Yii::$app->user->identity,\Yii::$app->params['senderEmail']);
+
         }else {
+
             $subscriber->delete();
         }
 

@@ -4,30 +4,51 @@
 namespace frontend\modelviews;
 
 
+
 use Yii;
 use yii\helpers\Url;
 
-class ChannelModelView
+/**
+ * Class ChannelModelView
+ * @package frontend\modelviews
+ */
+final class ChannelModelView
 {
 
     public $channel;
 
 
-    public function __construct($channel){
+    /**
+     * ChannelModelView constructor.
+     * @param $channel
+     */
+    public function __construct(object $channel)
+    {
 
         $this->channel = $channel;
     }
 
-    public function isSubscribedUser(){
+    /**
+     * @return mixed
+     */
+    public function isSubscribedUser(string $user)
+    {
 
-        return $this->channel->isSubscribed(Yii::$app->user->id);
+        return $this->channel->isSubscribed($user);
     }
 
-    public function countSubscribers(){
+    /**
+     * @return mixed
+     */
+    public function countSubscribers()
+    {
 
         return $this->channel->getSubscribers()->count();
     }
 
+    /**
+     * @return string
+     */
     public function urlTo()
     {
         return Url::to(['channel/subscribe','username'=>$this->channel->username]);

@@ -17,10 +17,17 @@ use yii\filters\VerbFilter;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 
+/**
+ * Class VideoController
+ * @package frontend\controllers
+ */
 class VideoController extends Controller
 {
 
-    public function behaviors()
+    /**
+     * @return array[]
+     */
+    public function behaviors():array
     {
         return [
             'access'=> [
@@ -45,8 +52,11 @@ class VideoController extends Controller
     }
 
 
-    public function actionIndex(){
-
+    /**
+     * @return string
+     */
+    public function actionIndex():string
+    {
 
         $videoService = new VideoService();
         $dataProvider = new ActiveDataProvider([
@@ -58,11 +68,18 @@ class VideoController extends Controller
         ]);
     }
 
-    public function actionView($id){
+    /**
+     * @param $id
+     * @return string
+     * @throws NotFoundHttpException
+     */
+    public function actionView(string $id):string
+    {
         $this->layout = 'auth';
         $videoRepository = new VideoRepository();
         $video = $videoRepository->findVideo($id);
         if(!$video){
+
             throw new NotFoundHttpException("Video does not exist");
         }
 
@@ -77,11 +94,18 @@ class VideoController extends Controller
         ]);
     }
 
-    public function actionLike($id){
+    /**
+     * @param $id
+     * @return string
+     * @throws NotFoundHttpException
+     */
+    public function actionLike(string $id):string
+    {
 
         $videoRepository = new VideoRepository();
         $video = $videoRepository->findVideo($id);
         if(!$video){
+
             throw new NotFoundHttpException("Video does not exist");
         }
         $userId = \Yii::$app->user->id;
@@ -95,12 +119,18 @@ class VideoController extends Controller
         ]);
     }
 
-
-    public function actionDislike($id){
+    /**
+     * @param $id
+     * @return string
+     * @throws NotFoundHttpException
+     */
+    public function actionDislike(string $id):string
+    {
 
         $videoRepository = new VideoRepository();
         $video = $videoRepository->findVideo($id);
         if(!$video){
+
             throw new NotFoundHttpException("Video does not exist");
         }
         $userId = \Yii::$app->user->id;
@@ -114,11 +144,17 @@ class VideoController extends Controller
         ]);
     }
 
-    public function actionSearch($keyword){
+    /**
+     * @param $keyword
+     * @return string
+     */
+    public function actionSearch(string $keyword):string
+    {
         $videoService = new VideoService();
         $query = $videoService->videoSearchGet();
 
         if($keyword){
+
             $query->byKeyword($keyword);
         }
 
@@ -132,7 +168,11 @@ class VideoController extends Controller
         ]);
     }
 
-    public function actionHistory(){
+    /**
+     * @return string
+     */
+    public function actionHistory():string
+    {
 
         $videoService = new VideoService();
         $query = $videoService->videoHistoryGet();
@@ -150,8 +190,13 @@ class VideoController extends Controller
 
     }
 
-
-    protected function saveLikeDislike($videoId,$userId,$type){
+    /**
+     * @param $videoId
+     * @param $userId
+     * @param $type
+     */
+    protected function saveLikeDislike(int $videoId,int $userId,$type):void
+    {
 
         $videoLikeDislike = new VideoLike();
         $videoLikeDislike->video_id = $videoId;

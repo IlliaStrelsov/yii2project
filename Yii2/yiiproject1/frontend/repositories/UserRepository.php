@@ -7,7 +7,11 @@ namespace frontend\repositories;
 use common\models\User;
 use yii\web\NotFoundHttpException;
 
-class UserRepository
+/**
+ * Class UserRepository
+ * @package frontend\repositories
+ */
+final class UserRepository
 {
 
     /**
@@ -15,7 +19,8 @@ class UserRepository
      * @return User
      * @throws NotFoundHttpException
      */
-    public function findChannel($username){
+    public function findChannelByUsername(string $username):object
+    {
         return User::findByUsername($username);
     }
 
